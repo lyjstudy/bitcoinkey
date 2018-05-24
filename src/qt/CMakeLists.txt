@@ -60,9 +60,10 @@ qt5_add_resources(QRC_BITCOIN_CPP bitcoin.qrc)
 
 # Do protobuf codegen
 find_package(Protobuf REQUIRED)
+
 protobuf_generate_cpp(PROTOBUF_SOURCES PROTOBUF_HEADERS paymentrequest.proto)
 
-add_library(bitcoin-qt-base
+add_executable(bitcoin-qt
 	bantablemodel.cpp
 	bitcoinaddressvalidator.cpp
 	bitcoinamountfield.cpp
@@ -85,6 +86,7 @@ add_library(bitcoin-qt-base
 	splashscreen.cpp
 	trafficgraphwidget.cpp
 	utilitydialog.cpp
+	bitcoin.cpp
 
 	# Handle ui files
 	${UI_GENERATED_HEADERS}
@@ -103,28 +105,28 @@ add_library(bitcoin-qt-base
 
 # Windows support
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-	target_sources(bitcoin-qt-base PRIVATE winshutdownmonitor.cpp)
+	target_sources(bitcoin-qt PRIVATE winshutdownmonitor.cpp)
 endif()
 
-target_include_directories(bitcoin-qt-base
+target_include_directories(bitcoin-qt
 	PUBLIC
 		.
 		${CMAKE_CURRENT_BINARY_DIR}
 		${CMAKE_CURRENT_BINARY_DIR}/forms
-		${Protobuf_INCLUDE_DIRS}
+		${PROTOBUF_INCLUDE_DIRS}
 )
 
-target_link_libraries(bitcoin-qt-base
+target_link_libraries(bitcoin-qt
 	server
-	rpcclient
+	zmq
 	Qt5::Widgets
 	Qt5::Network
-	${Protobuf_LIBRARIES}
+	${PROTOBUF_LIBRARIES}
 )
 
 # Wallet
 if(BUILD_BITCOIN_WALLET)
-	target_sources(bitcoin-qt-base
+	target_sources(bitcoin-qt
 		PRIVATE
 			addressbookpage.cpp
 			addresstablemodel.cpp
@@ -154,9 +156,10 @@ if(BUILD_BITCOIN_WALLET)
 			walletview.cpp
 	)
 
-	target_link_libraries(bitcoin-qt-base wallet)
+	target_link_libraries(bitcoin-qt wallet)
 
 	# Dependencies
 	find_package(OpenSSL REQUIRED)
-	target_link_libraries(bitcoin-qt-base ${OPENSSL_CRYPTO_LIBRARY})
+	target_link_libraries(bitcoin-qt ${OPENSSL_CRYPTO_LIBRARY})
 endif()
+
