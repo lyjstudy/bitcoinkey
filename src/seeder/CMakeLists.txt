@@ -11,4 +11,4 @@ add_executable(bitcoin-seeder
 	main.cpp
 )
 
-target_link_libraries(bitcoin-seeder common)
+target_link_libraries(bitcoin-seeder bitcoinconsensus)

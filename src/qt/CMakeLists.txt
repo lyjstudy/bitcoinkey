@@ -3,7 +3,7 @@
 project(bitcoin-qt)
 
 # This ensure that AUTOMOC doesn't run on generated files.
-cmake_policy(SET CMP0071 OLD)
+# cmake_policy(SET CMP0071 OLD)
 
 find_package(Qt5 COMPONENTS Widgets Network REQUIRED)
 

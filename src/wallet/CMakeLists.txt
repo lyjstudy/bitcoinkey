@@ -12,7 +12,7 @@ add_library(wallet
 	walletdb.cpp
 )
 
-target_link_libraries(wallet util univalue)
+target_link_libraries(wallet bitcoinconsensus server univalue)
 
 # Add Berkeley DB dependency
 find_package(BerkeleyDB REQUIRED)

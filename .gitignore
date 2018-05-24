@@ -113,3 +113,9 @@ contrib/devtools/split-debug.sh
 
 # vagrant
 .vagrant
+
+# vscode
+.vscode/
+
+# qt
+*.pro.user
