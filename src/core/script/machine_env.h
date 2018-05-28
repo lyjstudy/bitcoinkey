@@ -2,10 +2,22 @@
 
 #include <cstdint>
 #include <vector>
+#include <stdexcept>
+#include "script_error.h"
 #include "script_def.h"
 #include "opcode.h"
 
 namespace script {
+
+    class ExecuteException : public std::runtime_error {
+        protected:
+            ScriptError mErrCode;
+        public:
+            explicit ExecuteException(const char *err, ScriptError code)
+                : std::runtime_error(err), mErrCode(code) {
+            }
+            inline ScriptError ErrCode() { return mErrCode; }
+    };
 
     class MachineEnv {
         protected:
@@ -47,6 +59,9 @@ namespace script {
 
                 return false;
             }
+            inline bool GetMinimalPush() {
+                return (mFlags & SCRIPT_VERIFY_MINIMALDATA) == SCRIPT_VERIFY_MINIMALDATA;
+            }
             inline bool CheckMinimalPush(OpCodeType opcode, const std::vector<uint8_t> &data) {
                 if ((mFlags & SCRIPT_VERIFY_MINIMALDATA) == 0) {
                     return true;
@@ -85,13 +100,16 @@ namespace script {
                 }
                 return true;
             }
+            inline bool DisUpgradableNops() {
+                return (mFlags & SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS) == SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS;
+            }
 
+            virtual void CheckLockTime(const std::vector<uint8_t> &vLockTime) const = 0;
+            virtual void CheckSequence(const std::vector<uint8_t> &nSequence) const = 0;
 
             virtual bool CheckSig(const std::vector<uint8_t> &scriptSig,
                                 const std::vector<uint8_t> &vchPubKey,
                                 const std::vector<uint8_t> &scriptCode, 
                                 uint32_t flags) const = 0;
-            virtual bool CheckLockTime(const int64_t nLockTime) const = 0;
-            virtual bool CheckSequence(const int64_t nSequence) const = 0;
     };
 }

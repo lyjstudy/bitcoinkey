@@ -1,7 +1,11 @@
-
-set(CMAKE_CXX_STANDARD 11)
-
-add_executable(script_test
-	machine.cpp
-    test.cpp
+add_library(script
+    machine.cpp
+    machine_env.cpp
 )
+
+target_include_directories(script
+	PUBLIC
+		.
+)
+
+target_link_libraries(script crypto)

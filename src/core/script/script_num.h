@@ -72,7 +72,7 @@ namespace script {
 
         public:
             static bool IsMinimallyEncoded(const std::vector<uint8_t> &vch,
-                                    const size_t nMaxNumSize) {
+                                    const size_t nMaxNumSize = MAXIMUM_ELEMENT_SIZE) {
                 if (vch.size() > nMaxNumSize) {
                     return false;
                 }

@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <vector>
 #include <utility>
-#include <stdexcept>
+#include <functional>
 #include "script_error.h"
 #include "script_def.h"
 #include "machine_env.h"
@@ -11,16 +11,6 @@
 #include "opcode.h"
 
 namespace script {
-
-    class ExecuteException : public std::runtime_error {
-        protected:
-            ScriptError mErrCode;
-        public:
-            explicit ExecuteException(const char *err, ScriptError code)
-                : std::runtime_error(err), mErrCode(code) {
-            }
-            inline ScriptError ErrCode() { return mErrCode; }
-    };
 
     class Machine {
         public:
@@ -40,6 +30,14 @@ namespace script {
                     inline void Push(const StackData &data) { mStack.push_back(data); }
                     inline void Push(StackData &&data) { mStack.push_back(data); }
                     inline StackData Pop() { return _PopStack(mStack); }
+                    inline StackData &Top(int len = -1) {
+                        if (mStack.size() < (size_t)std::abs(len)) {
+                            throw ExecuteException("Machine::StackType::Top()",
+                                            SCRIPT_ERR_INVALID_STACK_OPERATION);
+                        }
+                        
+                        return mStack.at((int)mStack.size() + (len));
+                    }
                     inline size_t Size() { return mStack.size() + mLocalStack.size(); }
                     inline void Clear() { mLocalStack.clear(); mStack.clear(); }
                     // unique local stack per script
@@ -48,6 +46,13 @@ namespace script {
                     inline void ToLocal() { mLocalStack.push_back(std::move(_PopStack(mStack))); }
                     // OP_FROMALTSTACK
                     inline void FromLocal() { mStack.push_back(std::move(_PopStack(mLocalStack))); }
+                    inline void EraseEnd(int start, int end) {
+                        mStack.erase(mStack.end() + start, mStack.end() + end);
+                    }
+                    inline void SwapEnd(int idx1, int idx2) {
+                        std::swap(*(mStack.end() + idx1),
+                                    *(mStack.end() + idx2));
+                    }
             };
 
             class ConditionType {
@@ -100,7 +105,17 @@ namespace script {
             ScriptError OpCondition(OpCodeType opcode);
 
             bool _IfPopBool();
+            void _StackLogicOp(std::function<void(uint8_t&, uint8_t&)> func);
+            void _StackTopOp(std::function<void(ScriptNum&)> func);
+            void _StackNumericOp(std::function<ScriptNum(ScriptNum &, ScriptNum &)> func);
             static bool _CastToBool(const StackData &data);
+            template<typename Hasher> void _CalcHash() {
+                StackData result(Hasher::OUTPUT_SIZE);
+                auto top = mStack.Pop();
+                Hasher().Write(top.data(), top.size())
+                    .Finalize(result.data());
+                mStack.Push(result);
+            }
     };
 }
 
