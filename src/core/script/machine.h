@@ -7,6 +7,8 @@
 #include "script_error.h"
 #include "script_def.h"
 #include "machine_env.h"
+#include "script_num.h"
+#include "opcode.h"
 
 namespace script {
 
@@ -29,7 +31,7 @@ namespace script {
                     std::vector<StackData> mStack;
                     std::vector<StackData> mLocalStack;
 
-                    static StackData PopStack(std::vector<StackData> &stack);
+                    static StackData _PopStack(std::vector<StackData> &stack);
                 public:
                     StackType();
                     ~StackType();
@@ -37,15 +39,15 @@ namespace script {
                     StackType(StackType &&) = delete;
                     inline void Push(const StackData &data) { mStack.push_back(data); }
                     inline void Push(StackData &&data) { mStack.push_back(data); }
-                    inline StackData Pop() { return PopStack(mStack); }
+                    inline StackData Pop() { return _PopStack(mStack); }
                     inline size_t Size() { return mStack.size() + mLocalStack.size(); }
                     inline void Clear() { mLocalStack.clear(); mStack.clear(); }
                     // unique local stack per script
                     inline void ClearLocal() { mLocalStack.clear(); }
                     // OP_TOALTSTACK
-                    inline void ToLocal() { mLocalStack.push_back(std::move(PopStack(mStack))); }
+                    inline void ToLocal() { mLocalStack.push_back(std::move(_PopStack(mStack))); }
                     // OP_FROMALTSTACK
-                    inline void FromLocal() { mStack.push_back(std::move(PopStack(mLocalStack))); }
+                    inline void FromLocal() { mStack.push_back(std::move(_PopStack(mLocalStack))); }
             };
 
             class ConditionType {
@@ -70,12 +72,17 @@ namespace script {
 
         protected:
             std::vector<uint8_t> mProgram;
-            int mCounter; // program counter
+            size_t mCounter; // program counter
             StackType mStack; // program stack
             ConditionType mCondition; // IF NOTIF ELSE ENDIF
             ScriptError mError; // machine error
+            size_t mOpCounter; // executed opcode counter
             MachineEnv *mEnv;
 
+            inline ScriptError _SetError(ScriptError err) {
+                mError = err;
+                return mError;
+            }
         public:
             Machine();
             ~Machine();
@@ -85,9 +92,15 @@ namespace script {
             ScriptError Step();
             ScriptError Continue();
 
-        protected: // for opcode
-            ScriptError OpPushValue(int value); // OP_1NEGATE, OP_1 -> OP_16
-    };
+            ScriptError Fetch(OpCodeType &opcode, std::vector<uint8_t> *data);
+        protected:
+            ScriptError OpPush(OpCodeType opcode, const std::vector<uint8_t> &data);
+            ScriptError OpPush(OpCodeType opcode);
+            ScriptError OpNonCondition(OpCodeType opcode);
+            ScriptError OpCondition(OpCodeType opcode);
 
+            bool _IfPopBool();
+            static bool _CastToBool(const StackData &data);
+    };
 }
 

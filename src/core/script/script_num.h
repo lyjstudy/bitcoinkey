@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <vector>
 #include <stdexcept>
+#include <limits>
 
 namespace script {
 
@@ -179,8 +180,28 @@ namespace script {
             inline ScriptNum operator/(const int64_t &rhs) const { return ScriptNum(mValue / rhs); }
             inline ScriptNum operator%(const int64_t &rhs) const { return ScriptNum(mValue % rhs); }
             inline ScriptNum operator&(const int64_t &rhs) const { return ScriptNum(mValue & rhs); }
+            inline ScriptNum &operator=(const int64_t &rhs) { mValue = rhs; return *this; }
+            inline ScriptNum &operator+=(const int64_t &rhs) { mValue += rhs; return *this; }
+            inline ScriptNum &operator-=(const int64_t &rhs) { mValue -= rhs; return *this; }
+            inline ScriptNum &operator&=(const int64_t &rhs) { mValue &= rhs; return *this; }
 
             inline ScriptNum operator-() const { return ScriptNum(-mValue); }
             inline ScriptNum operator+(const ScriptNum &rhs) const { return operator+(rhs.mValue); }
+            inline ScriptNum operator-(const ScriptNum &rhs) const { return operator-(rhs.mValue); }
+            inline ScriptNum operator/(const ScriptNum &rhs) const { return operator/(rhs.mValue); }
+            inline ScriptNum operator%(const ScriptNum &rhs) const { return operator%(rhs.mValue); }
+            inline ScriptNum &operator+=(const ScriptNum &rhs) { return operator+=(rhs.mValue); }
+            inline ScriptNum &operator-=(const ScriptNum &rhs) { return operator-=(rhs.mValue); }
+            inline ScriptNum operator&(const ScriptNum &rhs) const { return operator&(rhs.mValue); }
+            inline ScriptNum &operator&=(const ScriptNum &rhs) { return operator&=(rhs.mValue); }
+
+            int GetValue() const {
+                if (mValue > std::numeric_limits<int>::max())
+                    return std::numeric_limits<int>::max();
+                else if (mValue < std::numeric_limits<int>::min())
+                    return std::numeric_limits<int>::min();
+                return mValue;
+            }
+            std::vector<uint8_t> GetVector() const { return _GetVector(mValue); }
     };
 }
