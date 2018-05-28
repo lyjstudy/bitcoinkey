@@ -49,7 +49,7 @@ add_subdirectory(libraries)
 add_subdirectory(core)
 
 # Test suite.
-add_subdirectory(test)
+# add_subdirectory(test)
 
 
 # bitcoin-seeder

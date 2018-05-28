@@ -104,12 +104,12 @@ namespace script {
                 return (mFlags & SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS) == SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS;
             }
 
-            virtual void CheckLockTime(const std::vector<uint8_t> &vLockTime) const = 0;
-            virtual void CheckSequence(const std::vector<uint8_t> &nSequence) const = 0;
+            virtual void CheckLockTime(const std::vector<uint8_t> &vLockTime) const {};
+            virtual void CheckSequence(const std::vector<uint8_t> &nSequence) const {};
 
-            virtual bool CheckSig(const std::vector<uint8_t> &scriptSig,
+            virtual void CheckSig(const std::vector<uint8_t> &scriptSig,
                                 const std::vector<uint8_t> &vchPubKey,
                                 const std::vector<uint8_t> &scriptCode, 
-                                uint32_t flags) const = 0;
+                                uint32_t flags) const {}
     };
 }

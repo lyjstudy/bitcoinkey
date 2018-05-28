@@ -98,6 +98,7 @@ namespace script {
             ScriptError Continue();
 
             ScriptError Fetch(OpCodeType &opcode, std::vector<uint8_t> *data);
+            inline size_t StackSize() { return mStack.Size(); }
         protected:
             ScriptError OpPush(OpCodeType opcode, const std::vector<uint8_t> &data);
             ScriptError OpPush(OpCodeType opcode);
