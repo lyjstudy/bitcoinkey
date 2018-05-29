@@ -552,10 +552,18 @@ namespace script {
     ScriptError Machine::OpCondition(OpCodeType opcode) {
         switch (opcode) {
             case OP_IF:
-                mCondition.If(_IfPopBool());
+                if (mCondition.Result()) {
+                    mCondition.If(_IfPopBool());
+                } else {
+                    mCondition.If(false);
+                }
                 break;
             case OP_NOTIF:
-                mCondition.NotIf(_IfPopBool());
+                if (mCondition.Result()) {
+                    mCondition.NotIf(_IfPopBool());
+                } else {
+                    mCondition.NotIf(true);
+                }
                 break;
             case OP_ELSE:
                 mCondition.Else();
