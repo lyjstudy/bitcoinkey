@@ -53,6 +53,9 @@ namespace script {
                         std::swap(*(mStack.end() + idx1),
                                     *(mStack.end() + idx2));
                     }
+                    inline bool Empty() {
+                        return mLocalStack.empty() && mStack.empty();
+                    }
             };
 
             class ConditionType {
@@ -99,6 +102,10 @@ namespace script {
 
             ScriptError Fetch(OpCodeType &opcode, std::vector<uint8_t> *data);
             inline size_t StackSize() { return mStack.Size(); }
+
+            void Reset();
+            bool IsResetStatus();
+            int GetSigOpCount(bool fAccurate);
         protected:
             ScriptError OpPush(OpCodeType opcode, const std::vector<uint8_t> &data);
             ScriptError OpPush(OpCodeType opcode);

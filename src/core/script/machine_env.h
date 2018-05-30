@@ -62,8 +62,14 @@ namespace script {
             inline bool GetMinimalPush() {
                 return (mFlags & SCRIPT_VERIFY_MINIMALDATA) == SCRIPT_VERIFY_MINIMALDATA;
             }
+            inline bool GetMinimalIf() {
+                return (mFlags & SCRIPT_VERIFY_MINIMALIF) == SCRIPT_VERIFY_MINIMALIF;
+            }
+            inline bool DisUpgradableNops() {
+                return (mFlags & SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS) == SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS;
+            }
             inline bool CheckMinimalPush(OpCodeType opcode, const std::vector<uint8_t> &data) {
-                if ((mFlags & SCRIPT_VERIFY_MINIMALDATA) == 0) {
+                if (!GetMinimalPush()) {
                     return true;
                 }
                 if (data.size() == 0) {
@@ -93,15 +99,12 @@ namespace script {
                 }
                 return true;
             }
-            inline bool VerifyMinimalIf(const std::vector<uint8_t> &data) {
-                if (mFlags & SCRIPT_VERIFY_MINIMALIF) {
+            inline bool CheckMinimalIf(const std::vector<uint8_t> &data) {
+                if (GetMinimalIf()) {
                     if (data.size() > 1) return false;
                     if (data.size() == 1 && data[0] != 1) return false;
                 }
                 return true;
-            }
-            inline bool DisUpgradableNops() {
-                return (mFlags & SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS) == SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS;
             }
 
             virtual void CheckLockTime(const std::vector<uint8_t> &vLockTime) const {};

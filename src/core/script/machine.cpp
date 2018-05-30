@@ -1,11 +1,25 @@
 
 #include <algorithm>
+#include <cassert>
 #include "machine.h"
 #include "crypto/ripemd160.h"
 #include "crypto/sha1.h"
 #include "crypto/sha256.h"
 
 namespace script {
+    /** Encode/decode small integers: */
+    static int DecodeOP_N(OpCodeType opcode) {
+        if (opcode == OP_0) return 0;
+        assert(opcode >= OP_1 && opcode <= OP_16);
+        return (int)opcode - (int)(OP_1 - 1);
+    }
+    /*
+    static OpCodeType EncodeOP_N(int n) {
+        assert(n >= 0 && n <= 16);
+        if (n == 0) return OP_0;
+        return (OpCodeType)(OP_1 + n - 1);
+    }
+    */
 
     Machine::StackType::StackType() {
     }
@@ -66,6 +80,8 @@ namespace script {
         mOpCounter = 0;
         if (clearStack) {
             mStack.Clear();
+        } else {
+            mStack.ClearLocal();
         }
         mCondition.Clear();
         if (mEnv == nullptr) {
@@ -91,6 +107,44 @@ namespace script {
             return SCRIPT_ERR_OK;
         }
         return err;
+    }
+
+    void Machine::Reset() {
+        mCounter = 0;
+        mOpCounter = 0;
+        mStack.Clear();
+        mCondition.Clear();
+        if (mEnv == nullptr) {
+            mError = SCRIPT_ERR_ENV_NOTSET;
+        } else if (mProgram.size() > MAX_SCRIPT_SIZE) {
+            mError = SCRIPT_ERR_SCRIPT_SIZE;
+        } else {
+            mError = SCRIPT_ERR_OK;
+        }
+    }
+    bool Machine::IsResetStatus() {
+        return mCounter == 0 && mOpCounter == 0 &&
+                mStack.Empty() && mCondition.Empty();
+    }
+    int Machine::GetSigOpCount(bool fAccurate) {
+        if (!IsResetStatus()) return -1;
+        
+        OpCodeType opcode;
+        OpCodeType lastOpcode = OP_INVALIDOPCODE;
+        int count = 0;
+        while (Fetch(opcode, nullptr) != SCRIPT_ERR_OK) {
+
+            if (opcode == OP_CHECKSIG || opcode == OP_CHECKSIGVERIFY) {
+                count++;
+            } else if (opcode == OP_CHECKMULTISIG || opcode == OP_CHECKMULTISIGVERIFY) {
+                if (fAccurate && lastOpcode >= OP_1 && lastOpcode <= OP_16)
+                    count += DecodeOP_N(lastOpcode);
+                else
+                    count += MAX_PUBKEYS_PER_MULTISIG;
+            }
+            lastOpcode = opcode;
+        }
+        return count;
     }
 
     ScriptError Machine::Step() {
@@ -579,8 +633,8 @@ namespace script {
 
     bool Machine::_IfPopBool() {
         auto data = mStack.Pop();
-        if (!mEnv->VerifyMinimalIf(data)) {
-            throw ExecuteException("Machine::_IfPopBool() VerifyMinimalIf", SCRIPT_ERR_MINIMALIF);
+        if (!mEnv->CheckMinimalIf(data)) {
+            throw ExecuteException("Machine::_IfPopBool() CheckMinimalIf", SCRIPT_ERR_MINIMALIF);
         }
         return _CastToBool(data);
     }
